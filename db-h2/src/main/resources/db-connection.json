@@ -1,0 +1,8 @@
+{
+  "host": "localhost",
+  "port": 0,
+  "type": "h2",
+  "version": "2.x",
+  "containerName": "",
+  "url": "jdbc:h2:mem:testdb"
+}

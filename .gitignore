@@ -1,0 +1,17 @@
+.idea/
+*.iml
+target/
+out/
+*.class
+*.jar
+*.war
+*.log
+
+# 敏感配置 - 含密码不提交
+ssh-config.properties
+db-secret.properties
+
+# SSL 证书文件
+certs/*/*
+!certs/*/.gitkeep
+!certs/README.md
