@@ -13,25 +13,17 @@ import java.sql.Connection;
  * <p>
  * 使用方式：{@code mvn exec:java -pl db-postgresql}
  * <p>
- * 配置来源：先读取 {@code db-secret.properties}，缺失字段 fallback 到
- * AI Skill 生成的 {@code db-connection.json}。
+ * 配置来源：从 {@code db-connection.json} 读取所有连接信息。
  */
 public class Main {
 
     /** PostgreSQL 数据库客户端 */
     private static final DatabaseClient CLIENT = new PostgresqlClient();
-    /** 数据库类型标识，对应 properties 中的 key 前缀 */
+    /** 数据库类型标识 */
     private static final String DB_TYPE = "postgresql";
 
-    /**
-     * @param args 可选，第一个参数为自定义配置路径，默认 {@code db-secret.properties}
-     */
     public static void main(String[] args) {
-        // 可指定自定义配置文件路径
-        String configPath = args.length > 0 ? args[0] : "db-secret.properties";
-
-        // 加载配置（props 优先，db-connection.json fallback）
-        ConfigLoader config = new ConfigLoader(configPath, DB_TYPE);
+        ConfigLoader config = new ConfigLoader();
         String version = config.getVersion();
         String host = config.getHost();
         int port = config.getPort();
@@ -65,7 +57,6 @@ public class Main {
             System.out.println("Done.");
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
             System.exit(1);
         }
     }

@@ -13,7 +13,7 @@ description: SSH 到目标机器，通过 Docker 创建 MySQL 容器，创建数
 | 镜像 | mysql:<版本> | ✅ |
 | 容器名 | mysql-<版本> | ✅ |
 | 端口映射 | 3306:3306 | ✅ |
-| root 密码 | 询问用户指定 | ✅ |
+| root 密码 | test123 | ✅ |
 | 内存限制 | 512m | ✅ |
 
 ## 数据库特定步骤
@@ -38,15 +38,16 @@ docker exec <容器名> mysqladmin ping -h localhost -u root -p<root密码>
 ```
 
 ### db-connection.json 格式
-写入 `db-mysql/src/main/resources/db-connection.json`：
+写入 `{output_dir}/db-connection.json`（`{output_dir}` 确定方式见 [公共流程](../_common.md) 步骤9）：
 ```json
 {
   "host": "<ssh.host>",
-  "port": <映射端口>,
+  "port": 3306,
   "type": "mysql",
   "version": "<版本>",
   "containerName": "<容器名>",
   "user": "<用户名>",
+  "password": "<用户密码>",
   "database": "<数据库名>"
 }
 ```

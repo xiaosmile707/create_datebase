@@ -17,7 +17,7 @@
 
 ```
 db-lab/
-├── skills/                     # AI Agent Skill 定义
+├── skills/                     # AI Agent Skill 模块（独立可复用）
 │   ├── README.md
 │   ├── _common.md              # Docker 数据库公共流程模板
 │   ├── mysql/SKILL.md
@@ -33,15 +33,10 @@ db-lab/
 ├── pom.xml                     # 父 POM
 ├── README.md
 │
-├── 以下为示例文件（提交 Git）：
-├── ssh-config.properties.example
-├── db-secret.properties.example
-│
 ├── 以下为真实配置（不提交 Git，开发者自行创建）：
-├── ssh-config.properties
-├── db-secret.properties
+├── skills/ssh-config.properties # Skills 模块自带 SSH 配置
 │
-├── 以下为 AI 生成的连接信息（不提交 Git）：
+├── 以下为 Skill 生成的连接信息（不提交 Git）：
 └── */db-connection.json
 ```
 
@@ -76,57 +71,19 @@ cd db-lab
 
 ```bash
 # Linux / Mac
-cp ssh-config.properties.example ssh-config.properties
-cp db-secret.properties.example db-secret.properties
+cp skills/ssh-config.properties.example skills/ssh-config.properties
 
 # Windows PowerShell
-Copy-Item ssh-config.properties.example ssh-config.properties
-Copy-Item db-secret.properties.example db-secret.properties
+Copy-Item skills/ssh-config.properties.example skills/ssh-config.properties
 ```
 
-**编辑 ssh-config.properties**（AI 模块使用）：
+**编辑 skills/ssh-config.properties**（Skills 模块使用）：
 
 ```properties
 ssh.host=192.168.1.100    # Docker 宿主机 IP
 ssh.port=22                # SSH 端口
 ssh.user=root              # SSH 用户名
 ssh.password=your_password # SSH 密码
-```
-
-**编辑 db-secret.properties**（Java 模块使用）：
-
-```properties
-# MySQL
-mysql.host=192.168.1.100
-mysql.port=3306
-mysql.version=8.0
-mysql.database=testdb
-mysql.user=testuser
-mysql.password=your_password
-
-# PostgreSQL
-postgresql.host=192.168.1.100
-postgresql.port=5432
-postgresql.version=16
-postgresql.database=testdb
-postgresql.user=testuser
-postgresql.password=your_password
-
-# Oracle
-oracle.host=192.168.1.100
-oracle.port=1521
-oracle.version=23ai
-oracle.database=FREE
-oracle.user=testuser
-oracle.password=your_password
-
-# H2
-h2.host=192.168.1.100
-h2.port=9092
-h2.version=2.x
-h2.database=testdb
-h2.user=sa
-h2.password=
 ```
 
 ### 第三步：构建项目
@@ -146,18 +103,17 @@ mvn clean install -DskipTests
 2. Docker 拉取镜像并启动容器
 3. 健康检查等待数据库就绪
 4. 创建数据库和用户
-5. 将连接信息写入 `db-connection.json`
+5. 将连接信息写入 `{output_dir}/db-connection.json`（默认输出到当前目录，可通过指令指定）
 
 示例指令：
 ```
 帮我创建一台 MySQL 8.0，root 密码用 root123
 ```
 ```
-在 192.168.1.100 上起一个 PostgreSQL 16，端口用 5433
+在 192.168.1.100 上起一个 PostgreSQL 16，端口用 5433，输出到 ./config/
 ```
 
-> 注意：`db-connection.json` 中的 host/port/version/user/database 会被 Java 模块自动读取，
-> 因此如果使用 AI 方式创建，`db-secret.properties` 中只需填写 password 即可。
+> **输出路径优先级**：用户指定 > 当前目录 `./`
 
 #### 方式 B：手动 Docker 创建
 
@@ -196,8 +152,7 @@ docker run -d --name h2-2.x -p 9092:9092 -p 8082:8082 \
 
 ### 第五步：运行 Java 模块验证
 
-确保 `db-secret.properties` 中对应数据库的 host/port/user/password 已填写正确，
-然后执行：
+确保 `db-connection.json` 已就绪，然后执行：
 
 ```bash
 # MySQL
@@ -211,11 +166,6 @@ mvn exec:java -pl db-oracle
 
 # H2
 mvn exec:java -pl db-h2
-```
-
-也可指定自定义配置文件路径：
-```bash
-mvn exec:java -pl db-mysql -Dexec.args="my-db-secret.properties"
 ```
 
 运行成功后会看到类似输出：
@@ -241,15 +191,7 @@ Done.
 
 ### 第六步（可选）：配置 SSL 加密连接
 
-将证书文件放入 `certs/<type>/` 目录，并在 `db-secret.properties` 中配置路径：
-
-```properties
-mysql.ssl.ca=certs/mysql/ca.pem
-mysql.ssl.cert=certs/mysql/cert.pem
-mysql.ssl.key=certs/mysql/key.pem
-```
-
-Java 模块检测到证书配置后会自动启用 SSL 加密连接。
+将证书文件放入 `certs/<type>/` 目录。当前 SSL 配置暂不支持通过 JSON 设置，如需 SSL 请使用环境变量或自定义 ConfigLoader。
 
 ---
 
@@ -274,28 +216,21 @@ test_orders (id, user_id, amount, status, created_at)  → FK → test_users
 
 ## 配置说明
 
-### 配置源优先级
+所有连接信息从 **db-connection.json** 读取，无需额外配置文件。
 
-Java 模块读取配置的优先级：**db-secret.properties > db-connection.json > 默认值**
-
-- `db-secret.properties`：主配置源，含 host/port/version/user/password/ssl
-- `db-connection.json`：AI Skill 创建的连接信息，作为 fallback
-- 密码**仅**从 `db-secret.properties` 读取，不会出现在 JSON 中
-
-### db-secret.properties 字段说明
+### db-connection.json 字段说明
 
 | Key | 说明 |
 |-----|------|
-| `<type>.host` | 数据库所在机器 IP |
-| `<type>.port` | 数据库端口 |
-| `<type>.version` | 数据库版本（如 8.0 / 16 / 23ai / 2.x） |
-| `<type>.database` | 数据库名 |
-| `<type>.user` | 登录用户名 |
-| `<type>.password` | 登录密码 |
-| `<type>.ssl.ca` | SSL CA 证书路径（可选） |
-| `<type>.ssl.cert` | SSL 客户端证书路径（可选） |
-| `<type>.ssl.key` | SSL 客户端私钥路径（可选） |
+| `host` | 数据库所在机器 IP |
+| `port` | 数据库端口 |
+| `type` | 数据库类型（mysql / postgresql / oracle / h2） |
+| `version` | 数据库版本（如 8.0 / 16 / 23ai / 2.x） |
+| `user` | 登录用户名 |
+| `password` | 登录密码 |
+| `database` | 数据库名 |
+| `containerName` | Docker 容器名 |
 
 ### AI 模块文档
 
-详细 Skill 说明和自定义方法见 [skills/README.md](skills/README.md)。
+详细 Skill 说明、独立使用方法和自定义指南见 [skills/README.md](skills/README.md)。

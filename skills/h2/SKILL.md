@@ -34,15 +34,16 @@ H2 在首次 TCP 连接时自动创建数据库，无需手动执行 CREATE DATA
 默认数据库名=`testdb`，用户名=`sa`，用户密码为空，均可由用户覆盖。
 
 ### db-connection.json 格式
-写入 `db-h2/src/main/resources/db-connection.json`：
+写入 `{output_dir}/db-connection.json`（`{output_dir}` 确定方式见 [公共流程](../_common.md) 步骤9）：
 ```json
 {
   "host": "<ssh.host>",
-  "port": <TCP映射端口>,
+  "port": 9092,
   "type": "h2",
   "version": "<版本>",
   "containerName": "<容器名>",
   "user": "sa",
+  "password": "",
   "database": "testdb"
 }
 ```

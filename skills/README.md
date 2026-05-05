@@ -1,6 +1,7 @@
-# AI 模块 — Agent Skill
+# Skills 模块 — 独立可复用的数据库 Skill 集合
 
 通过 AI Agent Skill 实现一键远程创建数据库容器，免去手动 Docker 操作。
+本模块与具体项目解耦，可独立复制到任意 Java 项目中使用。
 
 ## 概述
 
@@ -9,7 +10,56 @@
 2. Docker 拉取镜像并启动容器
 3. 健康检查等待数据库就绪
 4. 创建数据库与用户
-5. 将连接信息写入对应模块的 `db-<type>/src/main/resources/db-connection.json`
+5. 将连接信息写入 `{output_dir}/db-connection.json`
+
+## 独立使用方式
+
+### 1. 复制 skills 目录
+将整个 `skills/` 目录复制到你的项目中：
+```
+your-project/
+├── skills/                    ← 复制此目录
+│   ├── _common.md
+│   ├── ssh-config.properties
+│   ├── mysql/SKILL.md
+│   └── ...
+└── ...
+```
+
+### 2. 配置 SSH 凭据
+编辑 `skills/ssh-config.properties`，填入目标 Docker 宿主机的 SSH 信息：
+```properties
+ssh.host=192.168.1.100
+ssh.port=22
+ssh.user=root
+ssh.password=your_password
+```
+
+### 3. AI Agent 发起指令
+在 AI Agent 对话中用自然语言发起，可指定输出目录：
+```
+帮我创建一台 MySQL 8.0，密码用 root123，输出到 /my-project/config/
+```
+
+### 4. Java 侧读取连接信息
+使用 db-common 的 `ConfigLoader` 读取连接信息：
+```java
+// 指定 JSON 路径读取 Skill 生成的连接信息
+ConfigLoader config = new ConfigLoader(
+    "db-secret.properties",       // 密码配置
+    "mysql",                       // 数据库类型
+    "/your-project/config/db-connection.json"  // Skill 输出路径
+);
+String host = config.getHost();
+int port = config.getPort();
+String password = config.getPassword(); // 仅从 properties 读取
+```
+
+## 输出路径优先级
+
+`{output_dir}` 按以下优先级确定：
+1. **用户明确指定** — 如 "输出到 /my-project/config/"
+2. **默认值** — 当前工作目录 `./`
 
 ## Skill 列表
 
@@ -20,18 +70,6 @@
 | `oracle` | Oracle | 23ai（支持 23ai / 21c） | 1521 | [SKILL.md](oracle/SKILL.md) |
 | `h2` | H2 嵌入式 | 2.x（内嵌） | — | [SKILL.md](h2/SKILL.md) |
 
-## 使用方式
-
-在 AI Agent 对话中用自然语言发起：
-
-```
-帮我创建一台 MySQL 8.0，密码用 root123
-```
-
-```
-在 192.168.1.100 上起一个 PostgreSQL，端口用 5433
-```
-
 ## 工作流程
 
 ```
@@ -39,7 +77,7 @@
   ↓
 AI Agent 加载对应 SKILL.md
   ↓
-读取 ssh-config.properties（SSH 凭据）
+读取 skills/ssh-config.properties（SSH 凭据）
   ↓
 展示默认 Docker 参数，用户可覆盖
   ↓
@@ -47,27 +85,16 @@ SSH → docker run → health check
   ↓
 创建数据库与用户
   ↓
-写入 db-connection.json
+写入 {output_dir}/db-connection.json（不含密码）
   ↓
-Java 模块从 db-secret.properties 读取密码，从 db-connection.json 读取连接信息执行测试
+调用方 Java 模块从自身配置读取密码，从 db-connection.json 读取连接信息
 ```
 
-## 配置文件
+## 设计原则
 
-本模块依赖 `ssh-config.properties`（不提交 Git），首次使用请复制示例文件：
-
-```bash
-cp ssh-config.properties.example ssh-config.properties
-```
-
-格式：
-
-```properties
-ssh.host=192.168.1.100
-ssh.port=22
-ssh.user=root
-ssh.password=your_password
-```
+- **JSON 自包含**：`db-connection.json` 包含所有连接所需字段，Java 模块零额外配置即可连接
+- **独立 SSH 配置**：skills 目录自带 `ssh-config.properties`，不依赖外部项目
+- **可配置输出**：输出路径由用户指令指定，默认输出到当前工作目录
 
 ## 公共模板
 

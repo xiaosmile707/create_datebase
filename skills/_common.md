@@ -5,7 +5,7 @@
 ## 通用执行步骤
 
 ### 1. 读取 SSH 凭据
-从项目根目录 `ssh-config.properties` 中读取：
+从 skills 目录下的 `ssh-config.properties` 中读取：
 - `ssh.host` — 目标机器 IP
 - `ssh.port` — SSH 端口（默认 22）
 - `ssh.user` — SSH 用户名
@@ -67,7 +67,13 @@ docker logs --tail 50 <容器名>
 若创建失败，检查容器是否仍在运行，输出错误信息。
 
 ### 9. 写入 db-connection.json
-将连接信息写入对应模块的 `db-connection.json`，格式见各数据库 Skill。
+将连接信息写入 `{output_dir}/db-connection.json`，格式见各数据库 Skill。
+
+**确定 {output_dir} 的优先级：**
+1. 用户明确指定的输出目录（如 "输出到 /my-project/config/"）
+2. 默认输出到当前工作目录 `./`
+
+`db-connection.json` 包含完整的连接信息，Java 模块可直接从中读取所有字段。
 
 ## 异常处理
 

@@ -8,8 +8,7 @@ out/
 *.log
 
 # 敏感配置 - 含密码不提交
-ssh-config.properties
-db-secret.properties
+skills/ssh-config.properties
 
 # AI 生成的连接配置
 db-connection.json
