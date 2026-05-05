@@ -1,4 +1,4 @@
-# create_datebase
+# db-lab
 
 用于通过 Docker 远程创建多种数据库实例，并提供 JDBC/Java 客户端连接、测试 SQL 执行、测试数据灌入的一体化工具。
 
@@ -16,7 +16,7 @@
 ## 项目结构
 
 ```
-create_datebase/
+db-lab/
 ├── skills/                     # AI Agent Skill 定义
 │   ├── README.md
 │   ├── _common.md              # Docker 数据库公共流程模板
@@ -69,7 +69,7 @@ create_datebase/
 
 ```bash
 git clone <仓库地址>
-cd create_datebase
+cd db-lab
 ```
 
 复制示例配置文件并填入真实值：
