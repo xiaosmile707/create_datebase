@@ -2,15 +2,14 @@
 
 通过 AI Agent Skill 实现一键远程创建数据库容器，免去手动 Docker 操作。
 
-→ [返回主 README](../README.md)
-
 ## 概述
 
 本模块包含一组 AI Agent Skill，每个 Skill 对应一种数据库。AI Agent 加载 Skill 后自动完成：
 1. SSH 远程登录目标机器
 2. Docker 拉取镜像并启动容器
 3. 健康检查等待数据库就绪
-4. 将连接信息写入对应模块的 `db-<type>/src/main/resources/db-connection.json`
+4. 创建数据库与用户
+5. 将连接信息写入对应模块的 `db-<type>/src/main/resources/db-connection.json`
 
 ## Skill 列表
 
@@ -18,7 +17,7 @@
 |-------|--------|----------|----------|------|
 | `mysql` | MySQL | 8.0（支持 8.0 / 5.7） | 3306 | [SKILL.md](mysql/SKILL.md) |
 | `postgresql` | PostgreSQL | 16（支持 16 / 15 / 14） | 5432 | [SKILL.md](postgresql/SKILL.md) |
-| `oracle` | Oracle | 23ai（支持 23ai / 21c / 19c） | 1521 | [SKILL.md](oracle/SKILL.md) |
+| `oracle` | Oracle | 23ai（支持 23ai / 21c） | 1521 | [SKILL.md](oracle/SKILL.md) |
 | `h2` | H2 嵌入式 | 2.x（内嵌） | — | [SKILL.md](h2/SKILL.md) |
 
 ## 使用方式
@@ -46,9 +45,11 @@ AI Agent 加载对应 SKILL.md
   ↓
 SSH → docker run → health check
   ↓
+创建数据库与用户
+  ↓
 写入 db-connection.json
   ↓
-Java 模块从 db-secret.properties 读取连接信息执行测试
+Java 模块从 db-secret.properties 读取密码，从 db-connection.json 读取连接信息执行测试
 ```
 
 ## 配置文件
@@ -68,10 +69,14 @@ ssh.user=root
 ssh.password=your_password
 ```
 
+## 公共模板
+
+所有 Docker 数据库 Skill 遵循统一流程，差异仅在数据库特定参数。详见 [_common.md](_common.md)。
+
 ## 添加新数据库 Skill
 
-1. 在 `.opencode/skills/` 下新建目录，目录名即 Skill 名
-2. 创建 `SKILL.md`，参考已有 Skill 模板
+1. 在 `skills/` 下新建目录，目录名即 Skill 名
+2. 创建 `SKILL.md`，参考已有 Skill 模板和 `_common.md`
 3. 更新本 README 的 Skill 列表
 
 模板结构见 [mysql/SKILL.md](mysql/SKILL.md)。

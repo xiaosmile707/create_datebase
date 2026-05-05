@@ -8,14 +8,29 @@ import com.createdb.client.runner.SqlRunner;
 
 import java.sql.Connection;
 
+/**
+ * PostgreSQL 模块入口，执行建表 → 测试查询 → 种子数据灌入的完整流程。
+ * <p>
+ * 使用方式：{@code mvn exec:java -pl db-postgresql}
+ * <p>
+ * 配置来源：先读取 {@code db-secret.properties}，缺失字段 fallback 到
+ * AI Skill 生成的 {@code db-connection.json}。
+ */
 public class Main {
 
+    /** PostgreSQL 数据库客户端 */
     private static final DatabaseClient CLIENT = new PostgresqlClient();
+    /** 数据库类型标识，对应 properties 中的 key 前缀 */
     private static final String DB_TYPE = "postgresql";
 
+    /**
+     * @param args 可选，第一个参数为自定义配置路径，默认 {@code db-secret.properties}
+     */
     public static void main(String[] args) {
+        // 可指定自定义配置文件路径
         String configPath = args.length > 0 ? args[0] : "db-secret.properties";
 
+        // 加载配置（props 优先，db-connection.json fallback）
         ConfigLoader config = new ConfigLoader(configPath, DB_TYPE);
         String version = config.getVersion();
         String host = config.getHost();
@@ -30,6 +45,11 @@ public class Main {
         SqlRunner sqlRunner = new SqlRunner();
         DataSeeder seeder = new DataSeeder();
 
+        // 1. 连接数据库
+        // 2. 连接测试
+        // 3. 执行 DDL 建表
+        // 4. 执行测试查询
+        // 5. 灌入种子数据
         try (Connection conn = CLIENT.getConnection(host, port, version, user, password, config.getSslConfig())) {
             System.out.println("Connected.");
 

@@ -3,5 +3,7 @@
   "port": 0,
   "type": "oracle",
   "version": "",
-  "containerName": ""
+  "containerName": "",
+  "user": "",
+  "database": "FREE"
 }

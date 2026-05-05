@@ -8,7 +8,7 @@
 |------|------|
 | 构建工具 | Maven（多模块） |
 | 语言 | Java |
-| 数据库 | MySQL、PostgreSQL、Oracle、H2（后续扩展更多） |
+| 数据库 | MySQL、PostgreSQL、Oracle、H2 |
 | 容器化 | Docker（通过 SSH 远程创建） |
 | 连接方式 | JDBC + 各数据库专用 Java 客户端 |
 | AI 辅助 | AI Agent Skill（自动化创建不同数据库） |
@@ -17,8 +17,9 @@
 
 ```
 create_datebase/
-├── .opencode/skills/           # AI Agent Skill 定义
+├── skills/                     # AI Agent Skill 定义
 │   ├── README.md
+│   ├── _common.md              # Docker 数据库公共流程模板
 │   ├── mysql/SKILL.md
 │   ├── postgresql/SKILL.md
 │   ├── oracle/SKILL.md
@@ -29,11 +30,6 @@ create_datebase/
 ├── db-oracle/                  # Oracle 连接模块
 ├── db-h2/                      # H2 连接模块
 ├── certs/                      # SSL 证书（不提交 Git）
-│   ├── README.md
-│   ├── mysql/
-│   ├── postgresql/
-│   ├── oracle/
-│   └── h2/
 ├── pom.xml                     # 父 POM
 ├── README.md
 │
@@ -43,83 +39,165 @@ create_datebase/
 │
 ├── 以下为真实配置（不提交 Git，开发者自行创建）：
 ├── ssh-config.properties
-└── db-secret.properties
+├── db-secret.properties
+│
+├── 以下为 AI 生成的连接信息（不提交 Git）：
+└── */db-connection.json
 ```
-
-## 功能
-
-### AI 模块（ai-skill）→ [详细文档](.opencode/skills/README.md)
-
-通过 AI Agent Skill 实现一键创建数据库，无需手动操作 Docker。
-
-#### 使用方式
-在 AI Agent 对话中输入自然语言指令，例如：
-- "帮我创建一台 MySQL 8.0"
-- "在 192.168.1.100 上用 Docker 起一个 PostgreSQL，端口用 3307"
-
-#### 核心流程
-1. AI Agent 加载对应数据库的 Skill 定义
-2. 从 `ssh-config.properties` 读取 SSH 凭据
-3. SSH 到目标机器执行 Docker 命令创建容器
-4. 健康检查通过后将连接信息写入对应模块的 `resources/db-connection.json`
-
-### Java 模块
-
-每个数据库独立为一个 Maven 模块，公共逻辑抽取到 `db-common`。
-
-| 模块 | 数据库 | 驱动 | 运行命令 |
-|------|--------|------|----------|
-| `db-mysql` | MySQL | mysql-connector-j | `mvn exec:java -pl db-mysql` |
-| `db-postgresql` | PostgreSQL | postgresql | `mvn exec:java -pl db-postgresql` |
-| `db-oracle` | Oracle | ojdbc8 | `mvn exec:java -pl db-oracle` |
-| `db-h2` | H2 | h2 | `mvn exec:java -pl db-h2` |
-| `db-common` | 公共接口 | — | — |
-
-#### 核心流程
-1. 读取 `db-secret.properties` 获取全部连接信息
-2. 每个模块内置对应数据库的 JDBC 驱动
-3. 执行连接测试 → DDL 建表 → 测试 SQL → 灌入数据
 
 ## 支持的数据库
 
-| 数据库 | Docker 创建 | JDBC 连接 | 原生客户端 | 状态 |
-|--------|:----------:|:---------:|:---------:|:----:|
-| MySQL  | ✅ | ✅ | ✅ | 规划中 |
-| PostgreSQL | ✅ | ✅ | ✅ | 规划中 |
-| Oracle | ✅ | ✅ | ✅ | 规划中 |
-| H2 | ❌（嵌入式） | ✅ | ✅ | 规划中 |
+| 数据库 | Docker 创建 | JDBC 连接 | 支持版本 |
+|--------|:----------:|:---------:|----------|
+| MySQL  | ✅ | ✅ | 8.0 / 5.7 |
+| PostgreSQL | ✅ | ✅ | 16 / 15 / 14 |
+| Oracle | ✅ | ✅ | 23ai / 21c |
+| H2 | ✅ | ✅ | 2.x（TCP Server 模式） |
 
-## 快速开始
+---
 
-### 环境要求
-- Open JDK 8
-- Maven 3.8+
-- Docker（目标机器上）
-- SSH 连接目标机器
+## 运行教程
 
-### 初始化配置
+### 第一步：环境准备
 
-首次 clone 后，复制示例文件并填入真实值：
+- **JDK**：Open JDK 8 或更高版本
+- **Maven**：3.8+
+- **Docker**：目标机器需安装 Docker 并开放 SSH（22 端口）
+- **网络**：本地能 SSH 连接目标机器
+
+### 第二步：克隆项目并配置
 
 ```bash
+git clone <仓库地址>
+cd create_datebase
+```
+
+复制示例配置文件并填入真实值：
+
+```bash
+# Linux / Mac
 cp ssh-config.properties.example ssh-config.properties
 cp db-secret.properties.example db-secret.properties
-# 编辑 ssh-config.properties 和 db-secret.properties
+
+# Windows PowerShell
+Copy-Item ssh-config.properties.example ssh-config.properties
+Copy-Item db-secret.properties.example db-secret.properties
 ```
 
-将 SSL 证书（如有）放入 `certs/<type>/` 对应目录。
+**编辑 ssh-config.properties**（AI 模块使用）：
 
-### 构建
+```properties
+ssh.host=192.168.1.100    # Docker 宿主机 IP
+ssh.port=22                # SSH 端口
+ssh.user=root              # SSH 用户名
+ssh.password=your_password # SSH 密码
+```
+
+**编辑 db-secret.properties**（Java 模块使用）：
+
+```properties
+# MySQL
+mysql.host=192.168.1.100
+mysql.port=3306
+mysql.version=8.0
+mysql.database=testdb
+mysql.user=testuser
+mysql.password=your_password
+
+# PostgreSQL
+postgresql.host=192.168.1.100
+postgresql.port=5432
+postgresql.version=16
+postgresql.database=testdb
+postgresql.user=testuser
+postgresql.password=your_password
+
+# Oracle
+oracle.host=192.168.1.100
+oracle.port=1521
+oracle.version=23ai
+oracle.database=FREE
+oracle.user=testuser
+oracle.password=your_password
+
+# H2
+h2.host=192.168.1.100
+h2.port=9092
+h2.version=2.x
+h2.database=testdb
+h2.user=sa
+h2.password=
+```
+
+### 第三步：构建项目
 
 ```bash
-mvn clean install
+mvn clean install -DskipTests
 ```
 
-### 使用 AI Agent Skill 创建数据库
+此命令编译所有模块并安装到本地 Maven 仓库。如果依赖下载缓慢，可在 Maven 的 `settings.xml` 中配置国内镜像。
 
-通过 AI Agent 执行对应 Skill，自动 Docker 拉起数据库容器。
+### 第四步：创建数据库实例（两种方式）
 
-### 使用 Java 模块连接测试
+#### 方式 A：通过 AI Agent Skill 自动创建（推荐）
+
+在 AI Agent 对话中发起自然语言指令，AI 会自动：
+1. SSH 登录目标机器
+2. Docker 拉取镜像并启动容器
+3. 健康检查等待数据库就绪
+4. 创建数据库和用户
+5. 将连接信息写入 `db-connection.json`
+
+示例指令：
+```
+帮我创建一台 MySQL 8.0，root 密码用 root123
+```
+```
+在 192.168.1.100 上起一个 PostgreSQL 16，端口用 5433
+```
+
+> 注意：`db-connection.json` 中的 host/port/version/user/database 会被 Java 模块自动读取，
+> 因此如果使用 AI 方式创建，`db-secret.properties` 中只需填写 password 即可。
+
+#### 方式 B：手动 Docker 创建
+
+如果不使用 AI，你也可以手动在目标机器上执行 Docker 命令。
+
+**MySQL 8.0 示例**：
+```bash
+docker rm -f mysql-8.0 2>/dev/null || true
+docker run -d --name mysql-8.0 -p 3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=root123 --memory=512m mysql:8.0
+
+# 等待就绪后创建业务数据库和用户
+docker exec mysql-8.0 mysql -u root -proot123 \
+  -e "CREATE DATABASE IF NOT EXISTS testdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+docker exec mysql-8.0 mysql -u root -proot123 \
+  -e "CREATE USER 'testuser'@'%' IDENTIFIED BY 'root123'; GRANT ALL ON testdb.* TO 'testuser'@'%'; FLUSH PRIVILEGES;"
+```
+
+**PostgreSQL 16 示例**：
+```bash
+docker rm -f postgres-16 2>/dev/null || true
+docker run -d --name postgres-16 -p 5432:5432 \
+  -e POSTGRES_PASSWORD=root123 --memory=512m postgres:16
+
+# 等待就绪后创建业务用户和数据库
+docker exec postgres-16 psql -U postgres -c "CREATE USER testuser WITH PASSWORD 'root123';"
+docker exec postgres-16 psql -U postgres -c "CREATE DATABASE testdb OWNER testuser;"
+```
+
+**H2 示例**：
+```bash
+docker rm -f h2-2.x 2>/dev/null || true
+docker run -d --name h2-2.x -p 9092:9092 -p 8082:8082 \
+  --memory=256m oscarfonts/h2:latest
+```
+
+### 第五步：运行 Java 模块验证
+
+确保 `db-secret.properties` 中对应数据库的 host/port/user/password 已填写正确，
+然后执行：
 
 ```bash
 # MySQL
@@ -135,75 +213,89 @@ mvn exec:java -pl db-oracle
 mvn exec:java -pl db-h2
 ```
 
-## 配置
-
-项目依赖三个配置文件，含密码的文件均不纳入 Git。
-首次使用请复制 `.example` 文件并填入真实值：
-
+也可指定自定义配置文件路径：
 ```bash
-cp ssh-config.properties.example ssh-config.properties
-cp db-secret.properties.example db-secret.properties
+mvn exec:java -pl db-mysql -Dexec.args="my-db-secret.properties"
 ```
 
-### 1. SSH 连接配置（AI 模块使用）
+运行成功后会看到类似输出：
+```
+===== db-mysql =====
+Type: mysql | Version: 8.0
+Host: 192.168.1.100:3306
+Connected.
+Connection test:
+  1
+Executing: sql/8.0/schema.sql
+  0 row(s) affected
+  0 row(s) affected
+  OK
+Executing: sql/8.0/test.sql
+  ...
+Executing: sql/8.0/seed.sql
+  3 row(s) affected
+  5 row(s) affected
+  OK
+Done.
+```
 
-`ssh-config.properties` — 不提交 Git，由 AI Skill 读取用于远程创建容器：
+### 第六步（可选）：配置 SSL 加密连接
+
+将证书文件放入 `certs/<type>/` 目录，并在 `db-secret.properties` 中配置路径：
 
 ```properties
-# ssh-config.properties
-ssh.host=192.168.1.100
-ssh.port=22
-ssh.user=root
-ssh.password=your_password
+mysql.ssl.ca=certs/mysql/ca.pem
+mysql.ssl.cert=certs/mysql/cert.pem
+mysql.ssl.key=certs/mysql/key.pem
 ```
 
-### 2. 数据库连接配置（Java 模块使用）
+Java 模块检测到证书配置后会自动启用 SSL 加密连接。
 
-`db-secret.properties` — 不提交 Git，Java 模块直接读取，格式为 `<type>.<key>`，可同时配置多种数据库：
+---
 
-```properties
-# db-secret.properties
-mysql.host=192.168.1.100
-mysql.port=3306
-mysql.version=8.0
-mysql.user=admin
-mysql.password=your_password
+## SQL 脚本说明
 
-# SSL 证书路径（可选，配置后自动启用）
-# mysql.ssl.ca=certs/mysql/ca.pem
-# mysql.ssl.cert=certs/mysql/cert.pem
-# mysql.ssl.key=certs/mysql/key.pem
+每个数据库模块的 `src/main/resources/sql/<version>/` 下包含三类脚本：
 
-postgresql.host=192.168.1.100
-postgresql.port=5432
-postgresql.version=16
-postgresql.user=admin
-postgresql.password=your_password
+| 文件 | 用途 |
+|------|------|
+| `schema.sql` | DDL 建表（test_users、test_orders） |
+| `test.sql` | 测试查询（统计用户数、订单数、联表查询） |
+| `seed.sql` | 种子数据灌入（3 条用户 + 5 条订单） |
+
+所有模块共享相同的表结构：
+
+```
+test_users (id, name, email, created_at)
+test_orders (id, user_id, amount, status, created_at)  → FK → test_users
 ```
 
-| Key | Description |
-|-----|-------------|
+---
+
+## 配置说明
+
+### 配置源优先级
+
+Java 模块读取配置的优先级：**db-secret.properties > db-connection.json > 默认值**
+
+- `db-secret.properties`：主配置源，含 host/port/version/user/password/ssl
+- `db-connection.json`：AI Skill 创建的连接信息，作为 fallback
+- 密码**仅**从 `db-secret.properties` 读取，不会出现在 JSON 中
+
+### db-secret.properties 字段说明
+
+| Key | 说明 |
+|-----|------|
 | `<type>.host` | 数据库所在机器 IP |
 | `<type>.port` | 数据库端口 |
-| `<type>.version` | 数据库版本（如 8.0 / 16 / 23ai） |
-| `<type>.user` | 数据库登录用户名 |
-| `<type>.password` | 数据库登录密码 |
-| `<type>.ssl.ca` | SSL CA 证书路径（可选，配置后自动启用 SSL） |
+| `<type>.version` | 数据库版本（如 8.0 / 16 / 23ai / 2.x） |
+| `<type>.database` | 数据库名 |
+| `<type>.user` | 登录用户名 |
+| `<type>.password` | 登录密码 |
+| `<type>.ssl.ca` | SSL CA 证书路径（可选） |
 | `<type>.ssl.cert` | SSL 客户端证书路径（可选） |
 | `<type>.ssl.key` | SSL 客户端私钥路径（可选） |
 
-SSL 证书文件放在 `certs/<type>/` 目录下，整个 `certs/` 目录不提交 Git。
+### AI 模块文档
 
-### 3. 容器连接信息（AI 模块记录）
-
-`db-connection.json` 位于每个模块 `db-<type>/src/main/resources/` 下，AI Skill 创建容器后写入，供记录确认，**Java 模块不读取**：
-
-```json
-{
-  "host": "192.168.1.100",
-  "port": 3306,
-  "type": "mysql",
-  "version": "8.0",
-  "containerName": "mysql-test"
-}
-```
+详细 Skill 说明和自定义方法见 [skills/README.md](skills/README.md)。

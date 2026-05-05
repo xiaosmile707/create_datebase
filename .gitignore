@@ -11,6 +11,9 @@ out/
 ssh-config.properties
 db-secret.properties
 
+# AI 生成的连接配置
+db-connection.json
+
 # SSL 证书文件
 certs/*/*
 !certs/*/.gitkeep

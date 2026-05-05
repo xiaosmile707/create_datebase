@@ -1,8 +1,9 @@
 {
-  "host": "localhost",
-  "port": 0,
+  "host": "",
+  "port": 9092,
   "type": "h2",
   "version": "2.x",
   "containerName": "",
-  "url": "jdbc:h2:mem:testdb"
+  "user": "sa",
+  "database": "testdb"
 }
