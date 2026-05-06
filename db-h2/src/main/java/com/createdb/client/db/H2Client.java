@@ -26,9 +26,9 @@ public class H2Client implements DatabaseClient {
      * @throws Exception 连接失败时抛出
      */
     @Override
-    public Connection getConnection(String host, int port, String version, String user, String password, SslConfig ssl) throws Exception {
+    public Connection getConnection(String host, int port, String database, String version, String user, String password, SslConfig ssl) throws Exception {
         Class.forName("org.h2.Driver");
-        String url = getJdbcUrl(host, port, version, ssl);
+        String url = getJdbcUrl(host, port, database, version, ssl);
         return DriverManager.getConnection(url, user, password);
     }
 
@@ -38,8 +38,9 @@ public class H2Client implements DatabaseClient {
      * 格式：jdbc:h2:tcp://{host}:{port}/{database};DB_CLOSE_DELAY=-1
      */
     @Override
-    public String getJdbcUrl(String host, int port, String version, SslConfig ssl) {
+    public String getJdbcUrl(String host, int port, String database, String version, SslConfig ssl) {
         // H2 TCP Server 模式，默认连接 testdb 数据库
-        return "jdbc:h2:tcp://" + host + ":" + port + "/testdb;DB_CLOSE_DELAY=-1";
+        String db = (database != null && !database.isEmpty()) ? database : "testdb";
+        return "jdbc:h2:tcp://" + host + ":" + port + "/" + db + ";DB_CLOSE_DELAY=-1";
     }
 }

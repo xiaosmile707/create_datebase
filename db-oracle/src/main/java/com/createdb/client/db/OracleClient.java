@@ -17,27 +17,34 @@ public class OracleClient implements DatabaseClient {
      * 建立 Oracle JDBC 连接。
      */
     @Override
-    public Connection getConnection(String host, int port, String version, String user, String password, SslConfig ssl) throws Exception {
+    public Connection getConnection(String host, int port, String database, String version, String user, String password, SslConfig ssl) throws Exception {
         // 加载 Oracle JDBC 驱动
         Class.forName("oracle.jdbc.driver.OracleDriver");
-        String url = getJdbcUrl(host, port, version, ssl);
+        String url = getJdbcUrl(host, port, database, version, ssl);
         return DriverManager.getConnection(url, user, password);
     }
 
     /**
      * 构建 Oracle JDBC URL。
      * <p>
-     * 非 SSL 使用简易格式：{@code jdbc:oracle:thin:@host:port:FREE}。
+     * 非 SSL 使用简易格式：{@code jdbc:oracle:thin:@host:port:SERVICE_NAME}。
      * SSL 启用时使用完整 TNS 连接描述符和 TCPS 协议。
      */
     @Override
-    public String getJdbcUrl(String host, int port, String version, SslConfig ssl) {
+    public String getJdbcUrl(String host, int port, String database, String version, SslConfig ssl) {
+        String svc = (database != null && !database.isEmpty()) ? database : "FREE";
         if (ssl != null && ssl.hasAny()) {
             // SSL TCPS 加密连接，使用完整连接描述符
             return "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST="
-                    + host + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=FREE)))";
+                    + host + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + svc + ")))";
         }
         // 非 SSL 简易连接格式
-        return "jdbc:oracle:thin:@" + host + ":" + port + ":FREE";
+        return "jdbc:oracle:thin:@" + host + ":" + port + ":" + svc;
+    }
+
+    /** Oracle 需要使用 {@code SELECT 1 FROM DUAL} 进行连接测试。 */
+    @Override
+    public String getPingQuery() {
+        return "SELECT 1 FROM DUAL";
     }
 }

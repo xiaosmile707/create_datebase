@@ -18,4 +18,4 @@ certs/
     └── .gitkeep      # H2 通常不需要 SSL
 ```
 
-在 `db-secret.properties` 中配置证书路径后，Java 客户端自动启用 SSL。
+在 `db-connection.json` 的 `ssl` 字段中配置证书路径后，Java 客户端自动启用 SSL。

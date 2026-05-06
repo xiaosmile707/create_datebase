@@ -17,10 +17,10 @@ public class PostgresqlClient implements DatabaseClient {
      * 建立 PostgreSQL JDBC 连接。
      */
     @Override
-    public Connection getConnection(String host, int port, String version, String user, String password, SslConfig ssl) throws Exception {
+    public Connection getConnection(String host, int port, String database, String version, String user, String password, SslConfig ssl) throws Exception {
         // 加载 PostgreSQL JDBC 驱动
         Class.forName("org.postgresql.Driver");
-        String url = getJdbcUrl(host, port, version, ssl);
+        String url = getJdbcUrl(host, port, database, version, ssl);
         return DriverManager.getConnection(url, user, password);
     }
 
@@ -31,9 +31,10 @@ public class PostgresqlClient implements DatabaseClient {
      * 并附加 CA / 客户端证书 / 私钥路径。
      */
     @Override
-    public String getJdbcUrl(String host, int port, String version, SslConfig ssl) {
+    public String getJdbcUrl(String host, int port, String database, String version, SslConfig ssl) {
+        String db = (database != null && !database.isEmpty()) ? database : "postgres";
         StringBuilder url = new StringBuilder("jdbc:postgresql://")
-                .append(host).append(":").append(port).append("/postgres");
+                .append(host).append(":").append(port).append("/").append(db);
         if (ssl != null && ssl.hasAny()) {
             // SSL 加密连接，证书验证模式
             url.append("?ssl=true&sslmode=verify-ca");

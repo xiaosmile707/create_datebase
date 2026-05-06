@@ -191,7 +191,7 @@ Done.
 
 ### 第六步（可选）：配置 SSL 加密连接
 
-将证书文件放入 `certs/<type>/` 目录。当前 SSL 配置暂不支持通过 JSON 设置，如需 SSL 请使用环境变量或自定义 ConfigLoader。
+将证书文件放入 `certs/<type>/` 目录，然后在 `db-connection.json` 中添加 `ssl` 字段指定证书路径即可启用加密连接。
 
 ---
 

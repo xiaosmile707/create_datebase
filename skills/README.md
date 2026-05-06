@@ -42,17 +42,15 @@ ssh.password=your_password
 ```
 
 ### 4. Java 侧读取连接信息
-使用 db-common 的 `ConfigLoader` 读取连接信息：
+Skill 生成的 `db-connection.json` 已包含完整连接信息（host/port/user/password/database），Java 模块直接使用即可：
 ```java
-// 指定 JSON 路径读取 Skill 生成的连接信息
-ConfigLoader config = new ConfigLoader(
-    "db-secret.properties",       // 密码配置
-    "mysql",                       // 数据库类型
-    "/your-project/config/db-connection.json"  // Skill 输出路径
-);
+// 读取 Skill 生成的连接信息（路径可由用户指定输出目录）
+ConfigLoader config = new ConfigLoader("path/to/db-connection.json");
 String host = config.getHost();
 int port = config.getPort();
-String password = config.getPassword(); // 仅从 properties 读取
+String user = config.getUser();
+String password = config.getPassword(); // 优先环境变量，fallback JSON
+String database = config.getDatabase();
 ```
 
 ## 输出路径优先级
@@ -85,9 +83,9 @@ SSH → docker run → health check
   ↓
 创建数据库与用户
   ↓
-写入 {output_dir}/db-connection.json（不含密码）
+写入 {output_dir}/db-connection.json（含完整连接信息，密码可被环境变量覆盖）
   ↓
-调用方 Java 模块从自身配置读取密码，从 db-connection.json 读取连接信息
+调用方 Java 模块通过 ConfigLoader 读取 db-connection.json 获取所有连接信息
 ```
 
 ## 设计原则

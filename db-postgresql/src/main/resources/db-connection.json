@@ -5,5 +5,11 @@
   "version": "",
   "containerName": "",
   "user": "",
-  "database": ""
+  "password": "",
+  "database": "",
+  "ssl": {
+    "caPath": "",
+    "certPath": "",
+    "keyPath": ""
+  }
 }

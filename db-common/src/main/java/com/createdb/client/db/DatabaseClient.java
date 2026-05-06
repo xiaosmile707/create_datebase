@@ -17,6 +17,7 @@ public interface DatabaseClient {
      *
      * @param host     数据库主机地址
      * @param port     数据库端口
+     * @param database 数据库/服务名
      * @param version  数据库版本号
      * @param user     登录用户名
      * @param password 登录密码
@@ -24,16 +25,28 @@ public interface DatabaseClient {
      * @return JDBC 连接对象
      * @throws Exception 驱动加载失败或连接被拒时抛出
      */
-    Connection getConnection(String host, int port, String version, String user, String password, SslConfig ssl) throws Exception;
+    Connection getConnection(String host, int port, String database, String version, String user, String password, SslConfig ssl) throws Exception;
 
     /**
      * 构建该数据库的 JDBC URL 字符串。
      *
-     * @param host    数据库主机地址
-     * @param port    数据库端口
-     * @param version 数据库版本号
-     * @param ssl     SSL 配置，为 null 则不附加 SSL 参数
+     * @param host     数据库主机地址
+     * @param port     数据库端口
+     * @param database 数据库/服务名
+     * @param version  数据库版本号
+     * @param ssl      SSL 配置，为 null 则不附加 SSL 参数
      * @return 完整的 JDBC URL
      */
-    String getJdbcUrl(String host, int port, String version, SslConfig ssl);
+    String getJdbcUrl(String host, int port, String database, String version, SslConfig ssl);
+
+    /**
+     * 返回用于连接测试的 Ping 查询语句。
+     * <p>
+     * 默认返回 {@code SELECT 1}，Oracle 等数据库需覆写为 {@code SELECT 1 FROM DUAL}。
+     *
+     * @return 连接测试 SQL
+     */
+    default String getPingQuery() {
+        return "SELECT 1";
+    }
 }

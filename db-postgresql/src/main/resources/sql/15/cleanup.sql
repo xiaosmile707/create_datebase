@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS test_orders;
+DROP TABLE IF EXISTS test_users;

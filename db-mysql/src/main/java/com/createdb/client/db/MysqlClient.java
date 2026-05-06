@@ -17,10 +17,10 @@ public class MysqlClient implements DatabaseClient {
      * 建立 MySQL JDBC 连接。
      */
     @Override
-    public Connection getConnection(String host, int port, String version, String user, String password, SslConfig ssl) throws Exception {
+    public Connection getConnection(String host, int port, String database, String version, String user, String password, SslConfig ssl) throws Exception {
         // 加载 MySQL JDBC 驱动
         Class.forName("com.mysql.cj.jdbc.Driver");
-        String url = getJdbcUrl(host, port, version, ssl);
+        String url = getJdbcUrl(host, port, database, version, ssl);
         return DriverManager.getConnection(url, user, password);
     }
 
@@ -31,9 +31,12 @@ public class MysqlClient implements DatabaseClient {
      * 避免连接警告。配置 SSL 后切换为加密参数。
      */
     @Override
-    public String getJdbcUrl(String host, int port, String version, SslConfig ssl) {
+    public String getJdbcUrl(String host, int port, String database, String version, SslConfig ssl) {
         StringBuilder url = new StringBuilder("jdbc:mysql://")
                 .append(host).append(":").append(port);
+        if (database != null && !database.isEmpty()) {
+            url.append("/").append(database);
+        }
         if (ssl != null && ssl.hasAny()) {
             // SSL 加密连接
             url.append("?useSSL=true&requireSSL=true&verifyServerCertificate=true");
