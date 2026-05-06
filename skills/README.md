@@ -1,7 +1,7 @@
 # Skills 模块 — 独立可复用的数据库 Skill 集合
 
 通过 AI Agent Skill 实现一键远程创建数据库容器，免去手动 Docker 操作。
-本模块与具体项目解耦，可独立复制到任意 Java 项目中使用。
+本模块与具体项目解耦，可独立复制到任意项目中使用。
 
 ## 概述
 
@@ -41,18 +41,6 @@ ssh.password=your_password
 帮我创建一台 MySQL 8.0，密码用 root123，输出到 /my-project/config/
 ```
 
-### 4. Java 侧读取连接信息
-Skill 生成的 `db-connection.json` 已包含完整连接信息（host/port/user/password/database），Java 模块直接使用即可：
-```java
-// 读取 Skill 生成的连接信息（路径可由用户指定输出目录）
-ConfigLoader config = new ConfigLoader("path/to/db-connection.json");
-String host = config.getHost();
-int port = config.getPort();
-String user = config.getUser();
-String password = config.getPassword(); // 优先环境变量，fallback JSON
-String database = config.getDatabase();
-```
-
 ## 输出路径优先级
 
 `{output_dir}` 按以下优先级确定：
@@ -83,16 +71,21 @@ SSH → docker run → health check
   ↓
 创建数据库与用户
   ↓
-写入 {output_dir}/db-connection.json（含完整连接信息，密码可被环境变量覆盖）
-  ↓
-调用方 Java 模块通过 ConfigLoader 读取 db-connection.json 获取所有连接信息
+写入 {output_dir}/db-connection.json（含完整连接信息）
 ```
 
 ## 设计原则
 
-- **JSON 自包含**：`db-connection.json` 包含所有连接所需字段，Java 模块零额外配置即可连接
+- **JSON 自包含**：`db-connection.json` 包含所有连接所需字段（host/port/user/password/database/ssl）
 - **独立 SSH 配置**：skills 目录自带 `ssh-config.properties`，不依赖外部项目
 - **可配置输出**：输出路径由用户指令指定，默认输出到当前工作目录
+
+## 已知踩坑汇总
+
+| 问题 | 现象 | 解决方案 |
+|------|------|----------|
+| 老内核线程创建失败 | MySQL 8.0 容器启动即退出，日志报 `Can't create thread (errno: 1)` | 添加 `--security-opt seccomp=unconfined` |
+| MySQL SSL 变量只读 | `ALTER SYSTEM SET ssl_ca=...` 报语法错误 | 必须通过写入 `/etc/mysql/conf.d/ssl.cnf` + 重启容器生效 |
 
 ## 公共模板
 

@@ -1,9 +1,9 @@
 {
-  "host": "",
+  "host": "192.168.1.100",
   "port": 9092,
   "type": "h2",
   "version": "2.x",
-  "containerName": "",
+  "containerName": "h2-2.x",
   "user": "sa",
   "password": "",
   "database": "testdb",

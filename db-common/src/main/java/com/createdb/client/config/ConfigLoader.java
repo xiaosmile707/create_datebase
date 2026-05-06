@@ -34,22 +34,22 @@ public class ConfigLoader {
 
     /** JSON 文件对应的 POJO，供 FastJSON 2 反序列化使用。 */
     private static class ConnectionConfig {
-        String host;
-        int port;
-        String type;
-        String version;
-        String containerName;
-        String user;
-        String password;
-        String database;
-        SslConfigJson ssl;
+        public String host;
+        public int port;
+        public String type;
+        public String version;
+        public String containerName;
+        public String user;
+        public String password;
+        public String database;
+        public SslConfigJson ssl;
     }
 
     /** JSON 中可选的 SSL 配置块。 */
     private static class SslConfigJson {
-        String caPath;
-        String certPath;
-        String keyPath;
+        public String caPath;
+        public String certPath;
+        public String keyPath;
     }
 
     private final String host;

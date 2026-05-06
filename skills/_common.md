@@ -52,6 +52,28 @@ docker run -d \
 
 若 `docker pull` 失败（网络问题、镜像不存在等），向用户报告错误，不要继续。
 
+> **⚠️ 踩坑：老内核 + MySQL 8.0 线程创建失败**
+>
+> 当目标机器内核版本较老（如 4.15.0）时，MySQL 8.0 容器可能在初始化阶段报错：
+> ```
+> Can't create thread to handle bootstrap (errno: 1)
+> Data Dictionary initialization failed.
+> ```
+> **根因**：老内核的默认 seccomp 安全策略阻止了 MySQL 8.0 新版本使用的某些系统调用（如 clone3）。
+>
+> **解决方案**：添加 `--security-opt seccomp=unconfined` 参数：
+> ```bash
+> docker run -d \
+>   --name <容器名> \
+>   -p <端口映射> \
+>   -e <环境变量> \
+>   --security-opt seccomp=unconfined \
+>   <镜像>
+> ```
+>
+> **判断时机**：当健康检查持续超时且 `docker logs` 显示上述错误时，自动重试加上该参数。
+> 注意：此时 `--memory` 限制也可能加剧问题，若加了 seccomp=unconfined 仍失败可尝试移除内存限制。
+
 ### 7. 健康检查
 循环检查数据库是否就绪，具体命令见各数据库 Skill。
 
@@ -73,7 +95,7 @@ docker logs --tail 50 <容器名>
 1. 用户明确指定的输出目录（如 "输出到 /my-project/config/"）
 2. 默认输出到当前工作目录 `./`
 
-`db-connection.json` 包含完整的连接信息，Java 模块可直接从中读取所有字段。
+`db-connection.json` 包含完整的连接信息，调用方可直接从中读取所有字段。
 
 ## 异常处理
 
@@ -84,6 +106,7 @@ docker logs --tail 50 <容器名>
 | 镜像拉取失败 | 检查镜像名和网络连接，向用户报告具体错误 |
 | 端口被占用 | 提示用户更换端口映射，或询问是否停用占用端口的进程 |
 | 容器启动后立即退出 | 执行 `docker logs <容器名>`，根据日志判断原因 |
+| 线程创建失败（errno: 1） | 老内核问题，添加 `--security-opt seccomp=unconfined` 重试 |
 | 健康检查超时 | 检查容器日志，提示用户可能需要等待更长时间或增加内存 |
 | 内存不足 | 提示用户减小 `--memory` 限制或更换目标机器 |
 | 创建数据库/用户失败 | 检查容器运行状态，输出 docker exec 错误信息 |

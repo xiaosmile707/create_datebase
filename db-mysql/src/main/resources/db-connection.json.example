@@ -1,0 +1,15 @@
+{
+  "host": "192.168.1.100",
+  "port": 3306,
+  "type": "mysql",
+  "version": "8.0",
+  "containerName": "mysql-8.0",
+  "user": "testuser",
+  "password": "your_password",
+  "database": "testdb",
+  "ssl": {
+    "caPath": "",
+    "certPath": "",
+    "keyPath": ""
+  }
+}

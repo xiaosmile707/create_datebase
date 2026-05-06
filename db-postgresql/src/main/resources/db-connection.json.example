@@ -1,0 +1,15 @@
+{
+  "host": "192.168.1.100",
+  "port": 5432,
+  "type": "postgresql",
+  "version": "16",
+  "containerName": "postgres-16",
+  "user": "testuser",
+  "password": "your_password",
+  "database": "testdb",
+  "ssl": {
+    "caPath": "",
+    "certPath": "",
+    "keyPath": ""
+  }
+}

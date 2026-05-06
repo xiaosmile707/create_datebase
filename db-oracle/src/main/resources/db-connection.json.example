@@ -1,0 +1,15 @@
+{
+  "host": "192.168.1.100",
+  "port": 1521,
+  "type": "oracle",
+  "version": "23ai",
+  "containerName": "oracle-23ai",
+  "user": "testuser",
+  "password": "your_password",
+  "database": "FREE",
+  "ssl": {
+    "caPath": "",
+    "certPath": "",
+    "keyPath": ""
+  }
+}
