@@ -14,8 +14,10 @@ certs/
 │   └── .gitkeep
 ├── oracle/
 │   └── .gitkeep
-└── h2/
-    └── .gitkeep      # H2 通常不需要 SSL
+├── h2/
+│   └── .gitkeep      # H2 通常不需要 SSL
+└── clickhouse/
+    └── .gitkeep      # ClickHouse SSL（如需要）
 ```
 
 在 `db-connection.json` 的 `ssl` 字段中配置证书路径后，Java 客户端自动启用 SSL。

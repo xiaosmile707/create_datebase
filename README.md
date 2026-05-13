@@ -8,7 +8,7 @@
 |------|------|
 | 构建工具 | Maven（多模块） |
 | 语言 | Java |
-| 数据库 | MySQL、PostgreSQL、Oracle、H2 |
+| 数据库 | MySQL、PostgreSQL、Oracle、H2、ClickHouse |
 | 容器化 | Docker（通过 SSH 远程创建） |
 | 连接方式 | JDBC + 各数据库专用 Java 客户端 |
 | AI 辅助 | AI Agent Skill（自动化创建不同数据库） |
@@ -23,12 +23,14 @@ db-lab/
 │   ├── mysql/SKILL.md
 │   ├── postgresql/SKILL.md
 │   ├── oracle/SKILL.md
-│   └── h2/SKILL.md
+│   ├── h2/SKILL.md
+│   └── clickhouse/SKILL.md
 ├── db-common/                  # 公共模块（接口、配置、SQL 运行器）
 ├── db-mysql/                   # MySQL 连接模块
 ├── db-postgresql/              # PostgreSQL 连接模块
 ├── db-oracle/                  # Oracle 连接模块
 ├── db-h2/                      # H2 连接模块
+├── db-clickhouse/              # ClickHouse 连接模块
 ├── certs/                      # SSL 证书（不提交 Git）
 ├── pom.xml                     # 父 POM
 ├── README.md
@@ -48,6 +50,7 @@ db-lab/
 | PostgreSQL | ✅ | ✅ | 16 / 15 / 14 |
 | Oracle | ✅ | ✅ | 23ai / 21c |
 | H2 | ✅ | ✅ | 2.x（TCP Server 模式） |
+| ClickHouse | ✅ | ✅ | 21.8 / 22.8 |
 
 ---
 
@@ -150,6 +153,23 @@ docker run -d --name h2-2.x -p 9092:9092 -p 8082:8082 \
   --memory=256m oscarfonts/h2:latest
 ```
 
+**ClickHouse 21.8 示例**：
+```bash
+docker rm -f clickhouse-21.8 2>/dev/null || true
+docker run -d --name clickhouse-21.8 -p 8123:8123 -p 9000:9000 \
+  -e CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1 \
+  -e CLICKHOUSE_PASSWORD=root123 \
+  --memory=512m clickhouse/clickhouse-server:21.8
+
+# 等待就绪后创建业务数据库和用户
+docker exec clickhouse-21.8 clickhouse-client --user default --password root123 \
+  --query "CREATE DATABASE IF NOT EXISTS testdb"
+docker exec clickhouse-21.8 clickhouse-client --user default --password root123 \
+  --query "CREATE USER IF NOT EXISTS testuser IDENTIFIED BY 'root123'"
+docker exec clickhouse-21.8 clickhouse-client --user default --password root123 \
+  --query "GRANT ALL ON testdb.* TO testuser"
+```
+
 ### 第五步：运行 Java 模块验证
 
 确保 `db-connection.json` 已就绪，然后执行：
@@ -166,6 +186,9 @@ mvn exec:java -pl db-oracle
 
 # H2
 mvn exec:java -pl db-h2
+
+# ClickHouse
+mvn exec:java -pl db-clickhouse
 ```
 
 运行成功后会看到类似输出：
@@ -204,6 +227,8 @@ Done.
 | `schema.sql` | DDL 建表（test_users、test_orders） |
 | `test.sql` | 测试查询（统计用户数、订单数、联表查询） |
 | `seed.sql` | 种子数据灌入（3 条用户 + 5 条订单） |
+
+> **注意**：ClickHouse 不支持外键约束和 AUTO_INCREMENT，其 SQL 脚本使用 MergeTree 引擎和 UInt 类型，与其他数据库有所不同。
 
 所有模块共享相同的表结构：
 

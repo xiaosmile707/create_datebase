@@ -1,0 +1,49 @@
+# 依赖层级定义
+# 用于文档化和验证模块间的依赖方向
+
+layers:
+  - name: skills
+    paths: ["skills/**"]
+    can_import: []  # skills 是纯 Markdown，不依赖任何代码模块
+    runtime: "AI Agent (text parsing)"
+
+  - name: db-clients
+    paths: ["db-mysql/**", "db-postgresql/**", "db-oracle/**", "db-h2/**", "db-clickhouse/**"]
+    can_import: [db-common]  # 只能依赖 db-common
+    runtime: "JVM 8+"
+
+  - name: db-common
+    paths: ["db-common/**"]
+    can_import: []  # 公共模块无内部依赖
+    runtime: "JVM 8+"
+
+  - name: certs
+    paths: ["certs/**"]
+    can_import: []  # 纯文件资源
+    runtime: "filesystem"
+
+# 隔离边界（禁止的依赖方向）
+forbidden_dependencies:
+  - from: skills
+    to: [db-common, db-clients]
+    reason: "skills 必须独立运行，不得引用 Java 代码模块"
+
+  - from: db-clients
+    to: [skills]
+    reason: "代码模块必须独立编译运行，不得依赖 skills 定义"
+
+  - from: db-common
+    to: [skills, db-clients]
+    reason: "公共模块不依赖上层模块"
+
+# 共享接口（唯一允许的间接关联）
+shared_interfaces:
+  - name: db-connection.json
+    producer: skills
+    consumer: db-clients
+    schema_owner: skills  # 格式由 skills 定义
+
+  - name: certs/
+    producer: skills
+    consumer: db-clients
+    description: "SSL 证书文件，由 skills 生成，代码模块使用"

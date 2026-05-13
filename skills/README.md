@@ -55,6 +55,7 @@ ssh.password=your_password
 | `postgresql` | PostgreSQL | 16（支持 16 / 15 / 14） | 5432 | [SKILL.md](postgresql/SKILL.md) |
 | `oracle` | Oracle | 23ai（支持 23ai / 21c） | 1521 | [SKILL.md](oracle/SKILL.md) |
 | `h2` | H2 嵌入式 | 2.x（内嵌） | — | [SKILL.md](h2/SKILL.md) |
+| `clickhouse` | ClickHouse | 21.8（支持 21.8 / 22.8） | 8123（HTTP）/ 9000（TCP） | [SKILL.md](clickhouse/SKILL.md) |
 
 ## 工作流程
 
