@@ -17,6 +17,7 @@
         <module>db-postgresql</module>
         <module>db-oracle</module>
         <module>db-h2</module>
+        <module>db-clickhouse</module>
     </modules>
 
     <properties>
@@ -46,6 +47,11 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>2.2.224</version>
+            </dependency>
+            <dependency>
+                <groupId>ru.yandex.clickhouse</groupId>
+                <artifactId>clickhouse-jdbc</artifactId>
+                <version>0.3.2</version>
             </dependency>
             <dependency>
                 <groupId>com.alibaba.fastjson2</groupId>
